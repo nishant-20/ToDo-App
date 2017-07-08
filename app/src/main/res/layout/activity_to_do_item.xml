@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_to_do_item"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/White"
+    android:orientation="vertical"
+    tools:context="com.nishantdayal.todolistappdb.ToDoItemActivity">
+
+    <TextView
+        android:id="@+id/id_secondactivity"
+        android:layout_width="352dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textColor="@color/colorPrimary"
+        android:textSize="50sp"
+        android:textStyle="bold"
+        android:layout_marginStart="16dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/title_secondactivity"
+        android:layout_width="287dp"
+        android:layout_height="wrap_content"
+        android:hint="Title"
+        android:textSize="25dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@+id/id_secondactivity"
+        app:layout_constraintRight_toLeftOf="@+id/guideline"
+        android:layout_marginEnd="8dp" />
+
+    <ImageButton
+        android:id="@+id/title_voice_button"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:src="@drawable/google_voice_icon"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        android:layout_marginStart="16dp"
+        app:layout_constraintBottom_toBottomOf="@+id/title_secondactivity"
+        app:layout_constraintLeft_toLeftOf="@+id/guideline"
+        android:layout_marginEnd="24dp"
+        app:layout_constraintRight_toRightOf="parent" />
+
+    <android.support.constraint.Guideline
+        android:layout_width="wrap_content"
+        android:layout_height="511dp"
+        android:id="@+id/guideline"
+        android:orientation="vertical"
+        tools:layout_editor_absoluteY="0dp"
+        tools:layout_editor_absoluteX="311dp"
+        app:layout_constraintGuide_begin="311dp" />
+
+    <ImageView
+        android:layout_width="50dp"
+        android:layout_height="0dp"
+        android:layout_gravity="bottom"
+        android:src="@drawable/calendar_icon"
+        app:layout_constraintTop_toBottomOf="@+id/title_secondactivity"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="16dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:id="@+id/imageView" />
+
+    <EditText
+        android:id="@+id/date_secondactivity"
+        android:layout_height="50dp"
+        android:focusable="false"
+        android:hint="Date"
+        android:textSize="25dp"
+        android:layout_width="114dp"
+        app:layout_constraintTop_toBottomOf="@+id/title_secondactivity"
+        app:layout_constraintRight_toLeftOf="@+id/imageView2"
+        app:layout_constraintLeft_toRightOf="@+id/imageView"
+        android:layout_marginTop="16dp" />
+
+    <ImageView
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:src="@drawable/clock_icon"
+        android:id="@+id/imageView2"
+        android:scaleType="fitCenter"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@+id/title_secondactivity"
+        app:layout_constraintLeft_toLeftOf="@+id/guideline2"
+        android:layout_marginStart="8dp" />
+
+
+    <EditText
+        android:id="@+id/time_secondactivity"
+        android:layout_width="104dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/date_secondactivity"
+        android:layout_weight="1"
+        android:focusable="false"
+        android:hint="Time"
+        android:textSize="25dp"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@+id/title_voice_button"
+        app:layout_constraintLeft_toRightOf="@+id/imageView2"
+        app:layout_constraintHorizontal_bias="0.97" />
+
+    <EditText
+        android:id="@+id/description_secondactivity"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="5"
+        android:hint="Description"
+        android:textSize="25dp"
+        app:layout_constraintTop_toBottomOf="@+id/date_secondactivity"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="16dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@+id/guideline"
+        android:layout_marginEnd="8dp" />
+
+
+    <ImageButton
+        android:id="@+id/description_voice_button"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:adjustViewBounds="true"
+        android:src="@drawable/google_voice_icon"
+        app:layout_constraintTop_toBottomOf="@+id/time_secondactivity"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="@+id/guideline"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="8dp"
+        android:scaleType="fitCenter" />
+
+    <android.support.constraint.Guideline
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/guideline2"
+        android:orientation="vertical"
+        tools:layout_editor_absoluteY="0dp"
+        tools:layout_editor_absoluteX="193dp"
+        app:layout_constraintGuide_percent="0.5026042" />
+
+    <Button
+        android:id="@+id/submitbutton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:background="@color/White"
+        android:gravity="center"
+        android:text=" SAVE "
+        android:textColor="@color/colorPrimary"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginBottom="16dp"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginStart="16dp"
+        app:layout_constraintLeft_toLeftOf="parent" />
+
+</android.support.constraint.ConstraintLayout>
