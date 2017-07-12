@@ -8,9 +8,8 @@
     android:layout_margin="20dp"
     android:background="@color/White">
 
-
-    <RadioButton
-        android:id="@+id/taskdoneradiobutton"
+    <CheckBox
+        android:id="@+id/istaskCompleted"
         android:layout_width="0dp"
         android:checked="false"
         android:layout_height="wrap_content"
@@ -57,6 +56,4 @@
                 android:textSize="15sp"/>
         </LinearLayout>
     </LinearLayout>
-
-
 </LinearLayout>

@@ -12,12 +12,14 @@ public class ToDoNote implements Serializable{
     String date;
     String time;
     String description;
+    int isCompleted;                  // 0 for false 1 for true
 
-    ToDoNote(int id,String title,String date,String time,String description){
+    ToDoNote(int id,String title,String date,String time,String description,int isCompleted){
         this.id = id;
         this.title = title;
         this.date = date;
         this.time = time;
         this.description = description;
+        this.isCompleted = isCompleted;
     }
 }

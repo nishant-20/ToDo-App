@@ -16,37 +16,42 @@ import android.os.Bundle;
 import android.speech.RecognizerIntent;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.text.format.DateFormat;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.TextView;
+import android.widget.LinearLayout;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 
+import static com.nishantdayal.todolistappdb.ToDoOpenHelper.TODO_ISCOMPLETED;
 import static com.nishantdayal.todolistappdb.ToDoOpenHelper.getToDoOpenHelperInstance;
 
-public class ToDoItemActivity extends FragmentActivity {
+public class ToDoItemActivity extends AppCompatActivity {
 
     ImageButton title_voice_button,description_voice_button;
-    TextView todo_idtextview;
     EditText title;
     static EditText d_date;
     static EditText t_time;
     EditText description;
-    Button submitbutton;
+    LinearLayout time_layout;
     int todo_id;
     int REQUEST_CODE_FOR_TITLE = 1,REQUEST_CODE_FOR_DESCRIPTION = 2;
-
+    ActionBar actionbar_itemactivity;
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         View view = getCurrentFocus();
@@ -70,12 +75,11 @@ public class ToDoItemActivity extends FragmentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_to_do_item);
 
-        todo_idtextview = (TextView) findViewById(R.id.id_secondactivity);
         title = (EditText) findViewById(R.id.title_secondactivity);
         d_date = (EditText) findViewById(R.id.date_secondactivity);
         t_time = (EditText) findViewById(R.id.time_secondactivity);
         description = (EditText) findViewById(R.id.description_secondactivity);
-        submitbutton = (Button) findViewById(R.id.submitbutton);
+        time_layout = (LinearLayout) findViewById(R.id.time_layout);
 
         title_voice_button = (ImageButton) findViewById(R.id.title_voice_button);
         title_voice_button.setOnClickListener(new View.OnClickListener() {
@@ -88,9 +92,14 @@ public class ToDoItemActivity extends FragmentActivity {
         description_voice_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                voicetotext("Description");
+                voicetotext("Notes");
             }
         });
+
+        Toolbar toolbar_itemactivity = (Toolbar) findViewById(R.id.toolbar_itemactivity);
+        setSupportActionBar(toolbar_itemactivity);
+
+        actionbar_itemactivity = getSupportActionBar();
 
         final Intent i1 = getIntent();
 
@@ -98,22 +107,17 @@ public class ToDoItemActivity extends FragmentActivity {
         todo_id = i1.getIntExtra(IntentConstants.TODO_ID, -1);
 
         if(todo_id==-1){
-            todo_idtextview.setText("NEW TASK");
+            actionbar_itemactivity.setTitle("NEW TASK");
+            time_layout.setVisibility(View.GONE);
         }
         else if (todo_id != -1) {
-            todo_idtextview.setText("MODIFY TASK");
+            actionbar_itemactivity.setTitle("MODIFY TASK");
             ToDoOpenHelper toDoOpenHelper = new ToDoOpenHelper(ToDoItemActivity.this);
             SQLiteDatabase database = toDoOpenHelper.getReadableDatabase();
 //            ToDoOpenHelper.TODO_ID+"="+todo_id
-            Cursor cursor = database.query(ToDoOpenHelper.TABLE_NAME,null,null,null,null,null,null);
+            Cursor cursor = database.query(ToDoOpenHelper.TABLE_NAME,null,ToDoOpenHelper.TODO_ID+"="+todo_id,null,null,null,null);
 
             cursor.moveToFirst();
-            if(cursor.getInt(cursor.getColumnIndex(ToDoOpenHelper.TODO_ID))==todo_id);
-            else
-                while(cursor.moveToNext()){
-                    if(cursor.getInt(cursor.getColumnIndex(ToDoOpenHelper.TODO_ID))==todo_id)
-                        break;
-                }
 
             title.setText(cursor.getString(cursor.getColumnIndex(ToDoOpenHelper.TODO_TITLE)));
             d_date.setText(cursor.getString(cursor.getColumnIndex(ToDoOpenHelper.TODO_DATE)));
@@ -125,6 +129,9 @@ public class ToDoItemActivity extends FragmentActivity {
             @Override
             public void onClick(View view) {
                 showdatepickerdialog(view);
+
+                if(!d_date.getText().toString().isEmpty())
+                    time_layout.setVisibility(View.VISIBLE);
             }
         });
         t_time.setOnClickListener(new View.OnClickListener() {
@@ -133,59 +140,74 @@ public class ToDoItemActivity extends FragmentActivity {
                 showtimepickerdialog(view);
             }
         });
-
-        submitbutton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String ret_td_title = title.getText().toString();
-                String ret_td_date = d_date.getText().toString();
-                String ret_td_time = t_time.getText().toString();
-
-                if (ret_td_title.trim().isEmpty()) {
-                    Toast.makeText(ToDoItemActivity.this, "Title cannot be empty.", Toast.LENGTH_SHORT).show();
-                    return; }
-                if(ret_td_date.isEmpty() && !ret_td_time.isEmpty()){
-                    Toast.makeText(ToDoItemActivity.this, "Enter the date and try again.", Toast.LENGTH_SHORT).show();
-                    return; }
-                if(!ret_td_date.isEmpty() && ret_td_time.isEmpty()){
-                    Toast.makeText(ToDoItemActivity.this, "Enter the time and try again.", Toast.LENGTH_SHORT).show();
-                    return; }
-
-                if(true){
-
-                }
-                updatesql();
-
-                finish();
-            }
-        });
-
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_item_activity,menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        if(item.getItemId()==R.id.save_menu){
+            submitbuttonclicked();
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    void submitbuttonclicked(){
+        String ret_td_title = title.getText().toString();
+        String ret_td_date = d_date.getText().toString();
+        String ret_td_time = t_time.getText().toString();
+
+        if (ret_td_title.trim().isEmpty()) {
+            Toast.makeText(ToDoItemActivity.this, "Title cannot be empty.", Toast.LENGTH_SHORT).show();
+            return; }
+        if(ret_td_date.isEmpty() && !ret_td_time.isEmpty()){
+            Toast.makeText(ToDoItemActivity.this, "Enter the date and try again.", Toast.LENGTH_SHORT).show();
+            return; }
+        if(!ret_td_date.isEmpty() && ret_td_time.isEmpty()){
+            Toast.makeText(ToDoItemActivity.this, "Enter the time and try again.", Toast.LENGTH_SHORT).show();
+            return; }
+
+        //Check for overdue events
+        if(true){
+
+        }
+        updatesql();
+
+        finish();
+    }
+
+    private boolean checkTime(){
+        Date date = new Date();
+
+        String currentdate = new SimpleDateFormat("dd/MM/yyyy").format(date).toString();
+        String currenttime = new SimpleDateFormat("HH:mm").format(date).toString();
+
+        if(d_date.getText().toString().compareTo(currentdate)>=0 && t_time.getText().toString().compareTo(currenttime)>0)
+            return true;
+        else
+            return false;
+
+    }
     public void setalarm(){
+
+        if(!checkTime())
+            return;
+
         Long millis=0l;
-
-        AlarmManager am = (AlarmManager) ToDoItemActivity.this.getSystemService(Context.ALARM_SERVICE);
-
         Intent i = new Intent(ToDoItemActivity.this,AlarmReceiver.class);
         i.putExtra(IntentConstants.TODO_ID,todo_id);
+        AlarmManager am = (AlarmManager) ToDoItemActivity.this.getSystemService(Context.ALARM_SERVICE);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(ToDoItemActivity.this,todo_id,i,PendingIntent.FLAG_UPDATE_CURRENT);
 
-//        Intent i = new Intent(ToDoItemActivity.this,AlarmActivity.class);
-//        i.putExtra(IntentConstants.TODO_ID,todo_id);
-//        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//        startActivity(i);
-
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(ToDoItemActivity.this,todo_id,i,0);
-
-        //Calculating epoch time from date and time
         try{
             millis = new SimpleDateFormat("dd/MM/yyyy").parse(d_date.getText().toString()).getTime();
-
             String[] time = t_time.getText().toString().split(":");
-
             millis += (Integer.parseInt(time[0])*60 + Integer.parseInt(time[1]))*60*1000;
-
-//            Log.i("Epoch",millis+"");
         }
         catch (Exception e){
             e.printStackTrace();
@@ -211,6 +233,7 @@ public class ToDoItemActivity extends FragmentActivity {
             cv.put(ToDoOpenHelper.TODO_DATE, ret_td_date);
             cv.put(ToDoOpenHelper.TODO_TIME, ret_td_time);
             cv.put(ToDoOpenHelper.TODO_DESCRIPTION, ret_td_description);
+            cv.put(ToDoOpenHelper.TODO_ISCOMPLETED,0);                      //Add false
 
             database.insert(ToDoOpenHelper.TABLE_NAME, null, cv);
 
@@ -231,9 +254,19 @@ public class ToDoItemActivity extends FragmentActivity {
             cv.put(ToDoOpenHelper.TODO_TIME, ret_td_time);
             cv.put(ToDoOpenHelper.TODO_DESCRIPTION, ret_td_description);
 
+            Cursor cursor = database.query(ToDoOpenHelper.TABLE_NAME,null,ToDoOpenHelper.TODO_ID+"="+todo_id,null,null,null,null);
+            cursor.moveToFirst();
+            if(!checkTime())
+                cv.put(ToDoOpenHelper.TODO_ISCOMPLETED, cursor.getInt(cursor.getColumnIndex(ToDoOpenHelper.TODO_ISCOMPLETED)));
+            else
+                cv.put(ToDoOpenHelper.TODO_ISCOMPLETED, 0);
+
             database.update(ToDoOpenHelper.TABLE_NAME, cv, ToDoOpenHelper.TODO_ID + "=" + todo_id, null);
 
-            if(!ret_td_date.isEmpty() && !ret_td_time.isEmpty())
+            cursor = database.query(ToDoOpenHelper.TABLE_NAME,null,ToDoOpenHelper.TODO_ID+"="+todo_id,null,null,null,null);
+            cursor.moveToFirst();
+            Log.i("IS",cursor.getInt(cursor.getColumnIndex(TODO_ISCOMPLETED))+"");
+            if(!ret_td_date.isEmpty() && !ret_td_time.isEmpty() && cursor.getInt(cursor.getColumnIndex(TODO_ISCOMPLETED))==0)
                 setalarm();
 
             setResult(MainActivity.DATA_CHANGED);
@@ -243,6 +276,7 @@ public class ToDoItemActivity extends FragmentActivity {
     public void showdatepickerdialog(View v) {
         DialogFragment newfragment = new DatePickerfragment();
         newfragment.show(getSupportFragmentManager(), "datePicker");
+
     }
 
     public static class DatePickerfragment extends DialogFragment implements DatePickerDialog.OnDateSetListener {
@@ -268,6 +302,7 @@ public class ToDoItemActivity extends FragmentActivity {
                 d_date.setText(day + "/" + "0" +(month + 1) + "/" + year);
             else
                 d_date.setText(day + "/" + (month + 1) + "/" + year);
+
         }
     }
 
@@ -284,6 +319,7 @@ public class ToDoItemActivity extends FragmentActivity {
             final Calendar myCalendar = Calendar.getInstance();
             int hour = myCalendar.get(Calendar.HOUR_OF_DAY);
             int min = myCalendar.get(Calendar.MINUTE);
+            min =(int) ((Math.round(min/10)+1)*10) % 60;
 
             return new TimePickerDialog(getActivity(), this, hour, min, DateFormat.is24HourFormat(getActivity()));
         }
@@ -318,7 +354,7 @@ public class ToDoItemActivity extends FragmentActivity {
         if(dialog_text.equals("Title")) {
             startActivityForResult(intent, REQUEST_CODE_FOR_TITLE);
         }
-        else if(dialog_text.equals("Description")){
+        else if(dialog_text.equals("Notes")){
             startActivityForResult(intent,REQUEST_CODE_FOR_DESCRIPTION);
         }
     }

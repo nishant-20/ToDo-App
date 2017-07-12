@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 
 public class AlarmReceiver extends BroadcastReceiver {
     int todo_id;
@@ -23,14 +24,8 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         ToDoOpenHelper toDoOpenHelper = new ToDoOpenHelper(context);
         SQLiteDatabase database = toDoOpenHelper.getReadableDatabase();
-        Cursor cursor = database.query(ToDoOpenHelper.TABLE_NAME,null,null,null,null,null,null);
+        Cursor cursor = database.query(ToDoOpenHelper.TABLE_NAME,null,ToDoOpenHelper.TODO_ID+"="+todo_id,null,null,null,null);
         cursor.moveToFirst();
-        if(cursor.getInt(cursor.getColumnIndex(ToDoOpenHelper.TODO_ID))==todo_id);
-        else
-            while(cursor.moveToNext()){
-                if(cursor.getInt(cursor.getColumnIndex(ToDoOpenHelper.TODO_ID))==todo_id)
-                    break;
-            }
 
 //        Toast.makeText(context, "Alarm is Ringing !! ", Toast.LENGTH_SHORT).show();
 
@@ -49,6 +44,7 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         notificationManager.notify(todo_id,builder.build());
 
+        Log.i("Tag1",todo_id+"receiver");
         Intent movetoactivity = new Intent(context,AlarmActivity.class);
         movetoactivity.putExtra(IntentConstants.TODO_ID,todo_id);
         movetoactivity.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

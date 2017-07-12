@@ -1,41 +1,53 @@
 package com.nishantdayal.todolistappdb;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 import static com.nishantdayal.todolistappdb.ToDoOpenHelper.getToDoOpenHelperInstance;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements onCheckBoxClickListener,NavigationView.OnNavigationItemSelectedListener{
     public final static int DATA_CHANGED = 1;
     public final static int DATA_ADDED = 2;
 
     ListView listview;
     ArrayList<ToDoNote> listitems;
     ToDoListAdapter todoAdapter;
-    int changepos, postoremove;
-    boolean flag;
+    int changepos;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.before_activity_main);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -52,10 +64,20 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        listitems = new ArrayList<>();
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle
+                (this,drawer,toolbar,R.string.navigation_drawer_open,R.string.navigation_drawer_close);
+        drawer.addDrawerListener(toggle);
+        toggle.syncState();
 
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
+
+        listitems = new ArrayList<>();
         listview = (ListView) findViewById(R.id.todolistview);
         todoAdapter = new ToDoListAdapter(this, listitems);
+        todoAdapter.setonCheckBoxClickListener(this);
         listview.setAdapter(todoAdapter);
 
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -101,6 +123,10 @@ public class MainActivity extends AppCompatActivity {
                                     SQLiteDatabase database = toDoOpenHelper.getWritableDatabase();
 
                                     database.delete(ToDoOpenHelper.TABLE_NAME,ToDoOpenHelper.TODO_ID+"="+temp.id,null);
+                                    AlarmManager am_mainactivity = (AlarmManager) MainActivity.this.getSystemService(Context.ALARM_SERVICE);
+
+                                    PendingIntent cancelpendingIntent =  PendingIntent.getBroadcast(MainActivity.this,temp.id,new Intent(MainActivity.this,AlarmReceiver.class),PendingIntent.FLAG_UPDATE_CURRENT);
+                                    am_mainactivity.cancel(cancelpendingIntent);
                                 }
                             }
 
@@ -142,8 +168,9 @@ public class MainActivity extends AppCompatActivity {
             String temp_date = cursor.getString(cursor.getColumnIndex(ToDoOpenHelper.TODO_DATE));
             String temp_time = cursor.getString(cursor.getColumnIndex(ToDoOpenHelper.TODO_TIME));
             String temp_description = cursor.getString(cursor.getColumnIndex(ToDoOpenHelper.TODO_DESCRIPTION));
+            int temp_isCompleted = cursor.getInt(cursor.getColumnIndex(ToDoOpenHelper.TODO_ISCOMPLETED));
 
-            ToDoNote temp = new ToDoNote(temp_id, temp_title, temp_date, temp_time, temp_description);
+            ToDoNote temp = new ToDoNote(temp_id, temp_title, temp_date, temp_time, temp_description,temp_isCompleted);
             listitems.add(temp);
         }
 
@@ -164,8 +191,9 @@ public class MainActivity extends AppCompatActivity {
             String temp_date = cursor.getString(cursor.getColumnIndex(ToDoOpenHelper.TODO_DATE));
             String temp_time = cursor.getString(cursor.getColumnIndex(ToDoOpenHelper.TODO_TIME));
             String temp_description = cursor.getString(cursor.getColumnIndex(ToDoOpenHelper.TODO_DESCRIPTION));
+            int temp_isCompleted = cursor.getInt(cursor.getColumnIndex(ToDoOpenHelper.TODO_ISCOMPLETED));
 
-            ToDoNote td = new ToDoNote(temp_id, temp_title, temp_date, temp_time, temp_description);
+            ToDoNote td = new ToDoNote(temp_id, temp_title, temp_date, temp_time, temp_description,temp_isCompleted);
             listitems.add(td);
         } else {
             cursor.moveToPosition(position);
@@ -175,8 +203,9 @@ public class MainActivity extends AppCompatActivity {
             String temp_date = cursor.getString(cursor.getColumnIndex(ToDoOpenHelper.TODO_DATE));
             String temp_time = cursor.getString(cursor.getColumnIndex(ToDoOpenHelper.TODO_TIME));
             String temp_description = cursor.getString(cursor.getColumnIndex(ToDoOpenHelper.TODO_DESCRIPTION));
+            int temp_isCompleted = cursor.getInt(cursor.getColumnIndex(ToDoOpenHelper.TODO_ISCOMPLETED));
 
-            ToDoNote td = new ToDoNote(temp_id, temp_title, temp_date, temp_time, temp_description);
+            ToDoNote td = new ToDoNote(temp_id, temp_title, temp_date, temp_time, temp_description,temp_isCompleted);
             listitems.remove(position);
             listitems.add(position, td);
         }
@@ -279,5 +308,103 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return true;
+    }
+
+
+    @Override
+    public void onCheckBoxClicked(View v, int pos) {
+        CheckBox checkBox = (CheckBox) v;
+
+
+        if(!checkBox.isChecked()){
+            Log.i("Insidemain","NotChecked");
+
+            Long millis = 0l;
+            ToDoNote temp = listitems.get(pos);
+            temp.isCompleted = 0;
+            listitems.remove(pos);
+            listitems.add(pos,temp);
+            todoAdapter.notifyDataSetChanged();
+
+            ToDoOpenHelper toDoOpenHelper = getToDoOpenHelperInstance(this);
+            SQLiteDatabase database = toDoOpenHelper.getWritableDatabase();
+
+            ContentValues cv = new ContentValues();
+
+            cv.put(ToDoOpenHelper.TODO_TITLE, temp.title);
+            cv.put(ToDoOpenHelper.TODO_DATE, temp.date);
+            cv.put(ToDoOpenHelper.TODO_TIME, temp.time);
+            cv.put(ToDoOpenHelper.TODO_DESCRIPTION, temp.description);
+            cv.put(ToDoOpenHelper.TODO_ISCOMPLETED,temp.isCompleted);
+
+            database.update(ToDoOpenHelper.TABLE_NAME, cv, ToDoOpenHelper.TODO_ID + "=" + temp.id, null);
+
+            AlarmManager am_mainactivity = (AlarmManager) MainActivity.this.getSystemService(Context.ALARM_SERVICE);
+            Intent i = new Intent(MainActivity.this,AlarmReceiver.class);
+            i.putExtra(IntentConstants.TODO_ID,temp.id);
+            PendingIntent pendingIntent =  PendingIntent.getBroadcast(MainActivity.this,temp.id,i,PendingIntent.FLAG_UPDATE_CURRENT);
+            try{
+                millis = new SimpleDateFormat("dd/MM/yyyy").parse(temp.date).getTime();
+                String[] time = temp.time.split(":");
+                millis += (Integer.parseInt(time[0])*60 + Integer.parseInt(time[1]))*60*1000;
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
+            am_mainactivity.set(AlarmManager.RTC_WAKEUP,millis,pendingIntent);
+        }
+        else{
+            Log.i("Insidemain","Checked");
+
+            ToDoNote temp = listitems.get(pos);
+
+            temp.isCompleted = 1;
+            listitems.remove(pos);
+            listitems.add(pos,temp);
+            todoAdapter.notifyDataSetChanged();
+
+            ToDoOpenHelper toDoOpenHelper = getToDoOpenHelperInstance(this);
+            SQLiteDatabase database = toDoOpenHelper.getWritableDatabase();
+
+            ContentValues cv = new ContentValues();
+
+            cv.put(ToDoOpenHelper.TODO_TITLE, temp.title);
+            cv.put(ToDoOpenHelper.TODO_DATE, temp.date);
+            cv.put(ToDoOpenHelper.TODO_TIME, temp.time);
+            cv.put(ToDoOpenHelper.TODO_DESCRIPTION, temp.description);
+            cv.put(ToDoOpenHelper.TODO_ISCOMPLETED,temp.isCompleted);
+
+            database.update(ToDoOpenHelper.TABLE_NAME, cv, ToDoOpenHelper.TODO_ID + "=" + temp.id, null);
+
+            AlarmManager am_mainactivity = (AlarmManager) MainActivity.this.getSystemService(Context.ALARM_SERVICE);
+
+            PendingIntent cancelpendingIntent =  PendingIntent.getBroadcast(MainActivity.this,temp.id,new Intent(MainActivity.this,AlarmReceiver.class),PendingIntent.FLAG_UPDATE_CURRENT);
+            am_mainactivity.cancel(cancelpendingIntent);
+        }
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        int id = item.getItemId();
+
+        if(id == R.id.overdue_tasks){
+            Toast.makeText(this, "Overdue Tasks", Toast.LENGTH_SHORT).show();
+        }
+        else if(id==R.id.completed_tasks){
+            Toast.makeText(this, "Completed Tasks", Toast.LENGTH_SHORT).show();
+        }
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawers();
+        return true;
+    }
+
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        if(drawer.isDrawerOpen(GravityCompat.START))
+            drawer.closeDrawer(GravityCompat.START);
+        else
+            super.onBackPressed();
     }
 }
